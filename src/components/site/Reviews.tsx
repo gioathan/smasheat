@@ -59,17 +59,23 @@ export function Reviews({ google }: { google: GoogleListing }) {
         </div>
 
         {reviews.length > 0 && (
-          // Phones: a swipeable row (scrollbar hidden). Wider screens: a loose,
-          // slightly tilted collage (3 across, extras centred) with no scrolling.
+          // Phones: a swipeable row (scrollbar hidden, no scroll-snap — it
+          // blocks vertical page scrolling from a touch that starts on a
+          // card). Wider screens: a loose, slightly tilted collage (3
+          // across, extras centred) with no scrolling.
+          //
+          // The whole row reveals as one unit (data-reveal here, not on each
+          // card): a per-card reveal transition breaks touch-scroll
+          // pass-through for a touch that starts on a card inside this
+          // horizontally-scrollable row — confirmed by testing, not a guess.
           <ul
-            data-reveal-group
-            className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 touch-pan-x [scrollbar-width:none] sm:mx-0 sm:touch-auto sm:flex-wrap sm:items-start sm:justify-center sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:px-2 sm:pt-4 sm:pb-6 lg:gap-x-8 [&::-webkit-scrollbar]:hidden"
+            data-reveal
+            className="-mx-5 mt-10 flex gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:items-start sm:justify-center sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:px-2 sm:pt-4 sm:pb-6 lg:gap-x-8 [&::-webkit-scrollbar]:hidden"
           >
             {reviews.map((review, i) => (
               <li
                 key={review.id}
-                data-reveal
-                className={`w-[85%] shrink-0 snap-start sm:w-[calc(50%-0.75rem)] lg:w-[calc((100%-4rem)/3)] ${
+                className={`w-[85%] shrink-0 sm:w-[calc(50%-0.75rem)] lg:w-[calc((100%-4rem)/3)] ${
                   COLLAGE[i % COLLAGE.length].offset
                 } ${i >= 3 ? "sm:hidden" : ""}`}
               >
