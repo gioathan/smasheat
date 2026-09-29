@@ -179,7 +179,7 @@ export function MenuTabs({
             key={`${active}-${group.id}`}
             className={`rounded-2xl bg-char p-8 text-cream ${cards.length > 0 ? "mt-5" : ""} ${
               switched ? "animate-card-pop" : ""
-            } ${isAll ? "max-md:hidden" : ""}`}
+            }`}
           >
             <p className="font-label text-sm font-bold tracking-[0.08em] text-flame uppercase">
               {group.name}
