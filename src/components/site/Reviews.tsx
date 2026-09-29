@@ -63,7 +63,7 @@ export function Reviews({ google }: { google: GoogleListing }) {
           // slightly tilted collage (3 across, extras centred) with no scrolling.
           <ul
             data-reveal-group
-            className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:items-start sm:justify-center sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:px-2 sm:pt-4 sm:pb-6 lg:gap-x-8 [&::-webkit-scrollbar]:hidden"
+            className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 touch-pan-x [scrollbar-width:none] sm:mx-0 sm:touch-auto sm:flex-wrap sm:items-start sm:justify-center sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:px-2 sm:pt-4 sm:pb-6 lg:gap-x-8 [&::-webkit-scrollbar]:hidden"
           >
             {reviews.map((review, i) => (
               <li
