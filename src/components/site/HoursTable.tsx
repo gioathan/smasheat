@@ -22,16 +22,15 @@ export function HoursTable({ rows, tone = "light" }: { rows: HoursRow[]; tone?: 
       <tbody>
         {rows.map((row) => {
           const isToday = today != null && row.dayIndexes.includes(today);
+          // border-radius doesn't render on <tr>, so the highlight is two
+          // cell backgrounds rounded on their outer edges instead of one
+          // row background — otherwise "today" gets hard square corners.
+          const highlight = isToday ? (dark ? "bg-white/5" : "bg-white/70") : "";
           return (
-            <tr
-              key={row.days}
-              className={
-                isToday ? (dark ? "bg-white/5" : "bg-white/70") : undefined
-              }
-            >
+            <tr key={row.days}>
               <th
                 scope="row"
-                className={`py-1.5 pl-2 text-left font-medium ${
+                className={`rounded-l-lg py-2 pr-2 pl-3 text-left font-medium ${highlight} ${
                   isToday ? (dark ? "text-cream" : "font-bold text-char") : dark ? "text-cream/60" : "text-char-soft"
                 }`}
               >
@@ -43,7 +42,7 @@ export function HoursTable({ rows, tone = "light" }: { rows: HoursRow[]; tone?: 
                 )}
               </th>
               <td
-                className={`py-1.5 pr-2 text-right whitespace-nowrap ${
+                className={`rounded-r-lg py-2 pr-3 pl-2 text-right whitespace-nowrap ${highlight} ${
                   row.closed
                     ? dark
                       ? "font-semibold text-red-400"

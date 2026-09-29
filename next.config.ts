@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
+    // Only the admin gallery page uses next/image (the public site uses
+    // plain <img>, so this doesn't touch it). Matches the 1-month
+    // Cache-Control already set on upload in gallery/menu actions.ts.
+    minimumCacheTTL: ONE_MONTH,
   },
   async headers() {
     return [
