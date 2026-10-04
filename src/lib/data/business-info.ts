@@ -40,3 +40,15 @@ export async function getUpcomingHoursOverrides(): Promise<HoursOverride[]> {
   if (error) throw error;
   return data ?? [];
 }
+
+/** Every override, past ones included — for the admin list. */
+export async function getAllHoursOverrides(): Promise<HoursOverride[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("hours_overrides")
+    .select("*")
+    .order("date", { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}

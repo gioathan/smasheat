@@ -3,24 +3,39 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { menuItemSchema } from "@/lib/validation/menu.schema";
+import {
+  categoryAllowsPhoto,
+  menuItemSchema,
+  menuPhotoError,
+} from "@/lib/validation/menu.schema";
 
 export type MenuFormState = { error?: string } | undefined;
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+async function categoryTakesPhoto(supabase: Supabase, categoryId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("categories")
+    .select("slug")
+    .eq("id", categoryId)
+    .maybeSingle();
+  return data ? categoryAllowsPhoto(data.slug) : true;
+}
+
 async function uploadImageIfPresent(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: Supabase,
   formData: FormData
-): Promise<string | undefined> {
+): Promise<{ path?: string; error?: string }> {
   const file = formData.get("image");
-  if (!(file instanceof File) || file.size === 0) return undefined;
+  if (!(file instanceof File) || file.size === 0) return {};
 
   const path = `${crypto.randomUUID()}-${file.name}`;
   // Unique path per upload, so a month-long cache can't serve a stale photo.
   const { error } = await supabase.storage
     .from("menu-images")
     .upload(path, file, { cacheControl: "2592000" });
-  if (error) throw error;
-  return path;
+  if (error) return { error: `Photo upload failed: ${error.message}` };
+  return { path };
 }
 
 export async function createMenuItem(
@@ -32,8 +47,13 @@ export async function createMenuItem(
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
 
+  const photoError = menuPhotoError(formData.get("image"));
+  if (photoError) return { error: photoError };
+
   const supabase = await createClient();
-  const imagePath = await uploadImageIfPresent(supabase, formData);
+  if (!(await categoryTakesPhoto(supabase, parsed.data.category_id))) formData.delete("image");
+  const { path: imagePath, error: uploadError } = await uploadImageIfPresent(supabase, formData);
+  if (uploadError) return { error: uploadError };
   const { data: existing } = await supabase
     .from("menu_items")
     .select("display_order")
@@ -72,13 +92,27 @@ export async function updateMenuItem(
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
 
+  const photoError = menuPhotoError(formData.get("image"));
+  if (photoError) return { error: photoError };
+
   const supabase = await createClient();
-  const imagePath = await uploadImageIfPresent(supabase, formData);
+  const { data: previous } = await supabase
+    .from("menu_items")
+    .select("image_path, category_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!previous) return { error: "This item no longer exists." };
+
+  if (!(await categoryTakesPhoto(supabase, previous.category_id))) formData.delete("image");
+  const { path: imagePath, error: uploadError } = await uploadImageIfPresent(supabase, formData);
+  if (uploadError) return { error: uploadError };
+
+  const removePhoto = formData.get("remove_image") === "on";
 
   const { error } = await supabase
     .from("menu_items")
+    // category_id is deliberately left alone: an item never changes category.
     .update({
-      category_id: parsed.data.category_id,
       name: parsed.data.name,
       description: parsed.data.description || null,
       price_cents: parsed.data.price_euros
@@ -86,12 +120,17 @@ export async function updateMenuItem(
         : null,
       allergen_notes: parsed.data.allergen_notes || null,
       is_available: parsed.data.is_available ?? false,
-      ...(imagePath ? { image_path: imagePath } : {}),
+      ...(imagePath ? { image_path: imagePath } : removePhoto ? { image_path: null } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // The old file is no longer referenced once it is replaced or removed.
+  if (previous.image_path && (imagePath || removePhoto)) {
+    await supabase.storage.from("menu-images").remove([previous.image_path]);
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/menu");

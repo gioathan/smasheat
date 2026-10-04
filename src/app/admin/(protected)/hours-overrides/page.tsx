@@ -1,10 +1,11 @@
-import { getUpcomingHoursOverrides } from "@/lib/data/business-info";
+import { getAllHoursOverrides } from "@/lib/data/business-info";
 import { addHoursOverride, deleteHoursOverride } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function HoursOverridesPage() {
-  const overrides = await getUpcomingHoursOverrides();
+  const overrides = await getAllHoursOverrides();
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
 
   return (
     <div>
@@ -64,14 +65,27 @@ export default async function HoursOverridesPage() {
 
       <ul className="mt-6 max-w-2xl divide-y divide-ink-900/10 rounded-xl border border-ink-900/10 bg-white">
         {overrides.length === 0 && (
-          <li className="px-4 py-4 text-sm text-ink-600">No upcoming overrides.</li>
+          <li className="px-4 py-4 text-sm text-ink-600">No holiday hours yet.</li>
         )}
         {overrides.map((o) => (
           <li key={o.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
             <span>
-              <span className="font-medium text-ink-900">{o.date}</span>
+              <span className="font-medium text-ink-900">
+                {new Date(o.date).toLocaleDateString("en-GB", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}
+              </span>
               {o.note ? ` — ${o.note}` : ""} —{" "}
               {o.is_closed ? "Closed" : `${o.open_time}–${o.close_time}`}
+              {o.date < today && (
+                <span className="ml-2 rounded-full bg-ink-900/5 px-2 py-0.5 text-xs text-ink-600">
+                  Past — no longer shown on the site
+                </span>
+              )}
             </span>
             <form action={deleteHoursOverride.bind(null, o.id)}>
               <button type="submit" className="font-medium text-ink-600 hover:text-red-600">

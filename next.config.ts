@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
     // Cache-Control already set on upload in gallery/menu actions.ts.
     minimumCacheTTL: ONE_MONTH,
   },
+  experimental: {
+    serverActions: {
+      // Admin photo uploads go through Server Actions (default cap is 1 MB).
+      // Photos are downscaled in the browser first, so this is headroom for
+      // the ones that can't be; Vercel itself rejects bodies over 4.5 MB.
+      bodySizeLimit: "4mb",
+    },
+  },
   async headers() {
     return [
       {

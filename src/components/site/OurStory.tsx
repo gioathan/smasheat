@@ -1,15 +1,29 @@
 /* eslint-disable @next/next/no-img-element */
 import { Check, UtensilsCrossed } from "lucide-react";
 import { brand, sectionCopy, story } from "@/content/story";
+import type { GalleryImage } from "@/lib/data/gallery";
 import { formatRating, type GoogleListing } from "@/lib/data/google-listing";
 import { SectionHeading } from "./SectionHeading";
 
-const PHOTOS = [
+// Shown until the admin uploads photos; uploads fill these slots in order.
+const FALLBACK_PHOTOS = [
   { src: "/images/burger-bite.jpg", caption: "Cheezzzy, mid-bite" },
   { src: "/images/truffle-fries.jpg", caption: "Truffle fries" },
 ];
 
-export function OurStory({ google }: { google: GoogleListing }) {
+export function OurStory({
+  google,
+  images,
+}: {
+  google: GoogleListing;
+  images: (GalleryImage & { url: string })[];
+}) {
+  // An uploaded photo only gets a caption if the admin gave it alt text.
+  const photos = FALLBACK_PHOTOS.map((fallback, i) => {
+    const uploaded = images[i];
+    return uploaded ? { src: uploaded.url, caption: uploaded.alt_text ?? "" } : fallback;
+  });
+
   const rating = google.rating != null ? formatRating(google.rating) : null;
 
   const stats = [
@@ -60,7 +74,7 @@ export function OurStory({ google }: { google: GoogleListing }) {
           </article>
 
           <div data-reveal className="grid grid-cols-2 gap-6 lg:grid-cols-1">
-            {PHOTOS.map((photo) => (
+            {photos.map((photo) => (
               <figure
                 key={photo.src}
                 className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-toast sm:aspect-[390/256]"
@@ -71,9 +85,11 @@ export function OurStory({ google }: { google: GoogleListing }) {
                   loading="lazy"
                   className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-char/80 to-transparent px-4 pt-10 pb-3 font-label text-xs font-bold tracking-[0.06em] text-white uppercase sm:text-sm">
-                  {photo.caption}
-                </figcaption>
+                {photo.caption && (
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-char/80 to-transparent px-4 pt-10 pb-3 font-label text-xs font-bold tracking-[0.06em] text-white uppercase sm:text-sm">
+                    {photo.caption}
+                  </figcaption>
+                )}
               </figure>
             ))}
           </div>

@@ -19,6 +19,7 @@ export function Menu({ categories }: { categories: Category[] }) {
       price: formatPrice(item.price_cents),
       available: item.is_available,
       allergen: item.allergen_notes,
+      image: item.image_url,
     })),
   }));
 

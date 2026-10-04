@@ -69,10 +69,11 @@ export default async function Home() {
       <main id="main">
         <Hero google={google} heroImageUrl={galleryImages[0]?.url} openHours={openHours} />
         <Ticker />
-        <OurStory google={google} />
+        <OurStory google={google} images={galleryImages.slice(1, 3)} />
         <Menu categories={categories} />
         <Reviews google={google} />
-        <Gallery images={galleryImages} businessInfo={businessInfo} />
+        {/* Uploaded photos by admin order: 1 = hero, 2–3 = Our Story, 4–8 = gallery. */}
+        <Gallery images={galleryImages.slice(3)} businessInfo={businessInfo} />
         <Visit
           businessInfo={businessInfo}
           hoursRows={hoursRows}

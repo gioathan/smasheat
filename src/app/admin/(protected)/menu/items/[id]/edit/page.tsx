@@ -8,16 +8,17 @@ export default async function EditMenuItemPage(
 ) {
   const { id } = await props.params;
   const categories = await getMenu();
-  const item = categories.flatMap((c) => c.menu_items).find((i) => i.id === id);
+  const category = categories.find((c) => c.menu_items.some((i) => i.id === id));
+  const item = category?.menu_items.find((i) => i.id === id);
 
-  if (!item) notFound();
+  if (!category || !item) notFound();
 
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-ink-900">Edit menu item</h1>
       <div className="mt-6">
         <MenuItemForm
-          categories={categories}
+          category={category}
           item={item}
           action={updateMenuItem.bind(null, id)}
           submitLabel="Save changes"

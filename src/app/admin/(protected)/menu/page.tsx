@@ -61,7 +61,19 @@ export default async function AdminMenuPage() {
                 <tbody>
                   {category.menu_items.map((item, i) => (
                     <tr key={item.id} className="border-b border-ink-900/5 last:border-0">
-                      <td className="px-4 py-3 font-medium text-ink-900">{item.name}</td>
+                      <td className="px-4 py-3 font-medium text-ink-900">
+                        <span className="flex items-center gap-3">
+                          {item.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.image_url}
+                              alt=""
+                              className="size-9 shrink-0 rounded-md object-cover"
+                            />
+                          )}
+                          {item.name}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-ink-600">{formatPrice(item.price_cents)}</td>
                       <td className="px-4 py-3">
                         <form action={toggleAvailability.bind(null, item.id, item.is_available)}>

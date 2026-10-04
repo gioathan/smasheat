@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 export type MenuCard = {
   id: string;
@@ -10,6 +11,7 @@ export type MenuCard = {
   price: string;
   available: boolean;
   allergen: string | null;
+  image: string | null;
 };
 
 export type MenuGroup = {
@@ -41,6 +43,13 @@ export function MenuTabs({
   const [expanded, setExpanded] = useState(false);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Cards with a photo open a popup with the full-size photo.
+  const [detail, setDetail] = useState<MenuCard | null>(null);
+  const detailRef = useRef<HTMLDialogElement>(null);
+  const openDetail = (item: MenuCard) => {
+    setDetail(item);
+    detailRef.current?.showModal();
+  };
 
   const total = groups.reduce((n, g) => n + g.items.length, 0);
   const tabs = [
@@ -127,27 +136,55 @@ export function MenuTabs({
               <li
                 key={item.id}
                 style={switched ? { animationDelay: `${Math.min(i, 8) * 45}ms` } : undefined}
-                className={`flex flex-col rounded-2xl border border-line bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-char hover:shadow-pop ${
+                className={`relative flex flex-col rounded-2xl border border-line bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-char hover:shadow-pop ${
                   switched ? "animate-card-pop" : ""
                 } ${item.available ? "" : "opacity-60"} ${
                   collapsible && !expanded && i >= MOBILE_PREVIEW ? "max-md:hidden" : ""
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-headline text-3xl leading-none tracking-[0.02em] text-char">
-                    {item.name}
-                  </h3>
-                  <span
-                    className={`shrink-0 pt-1 font-label text-lg font-bold ${
-                      item.available ? "text-flame-ink" : "text-char-soft"
-                    }`}
-                  >
-                    {item.available ? item.price : "Sold out"}
-                  </span>
+                {/* A photo sits beside the text as a thumbnail, so a card with
+                    one stays about the same height as a card without. */}
+                <div className="flex items-start gap-4">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt=""
+                      loading="lazy"
+                      className="size-20 shrink-0 rounded-xl bg-toast object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-headline text-3xl leading-none tracking-[0.02em] text-char">
+                        {item.image ? (
+                          // Stretched over the whole card, so anywhere on it opens the popup.
+                          <button
+                            type="button"
+                            aria-haspopup="dialog"
+                            onClick={() => openDetail(item)}
+                            className="cursor-pointer text-left uppercase after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-flame"
+                          >
+                            {item.name}
+                          </button>
+                        ) : (
+                          item.name
+                        )}
+                      </h3>
+                      <span
+                        className={`shrink-0 pt-1 font-label text-lg font-bold ${
+                          item.available ? "text-flame-ink" : "text-char-soft"
+                        }`}
+                      >
+                        {item.available ? item.price : "Sold out"}
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="mt-3 text-sm leading-relaxed text-char-soft">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {item.description && (
-                  <p className="mt-3 text-sm leading-relaxed text-char-soft">{item.description}</p>
-                )}
                 {item.allergen && (
                   <p className="mt-auto pt-5 font-label text-xs font-bold tracking-[0.06em] text-char-muted uppercase">
                     {item.allergen}
@@ -203,6 +240,61 @@ export function MenuTabs({
           </div>
         ))}
       </div>
+      <dialog
+        ref={detailRef}
+        aria-labelledby="menu-detail-title"
+        onClick={(e) => {
+          if (e.target === detailRef.current) detailRef.current?.close();
+        }}
+        className="m-auto w-[calc(100%-2.5rem)] max-w-md overflow-hidden rounded-2xl bg-cream p-0 shadow-float backdrop:bg-char/60 backdrop:backdrop-blur-sm"
+      >
+        {detail && (
+          <>
+            <div className="relative">
+              {detail.image && (
+                <img
+                  src={detail.image}
+                  alt={detail.name}
+                  className="aspect-[4/3] max-h-[55vh] w-full bg-toast object-cover"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => detailRef.current?.close()}
+                aria-label="Close"
+                className="absolute top-3 right-3 grid size-10 place-items-center rounded-lg bg-cream text-char shadow-pop-sm transition-colors hover:bg-char hover:text-cream"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-3">
+                <h3
+                  id="menu-detail-title"
+                  className="font-headline text-4xl leading-none tracking-[0.02em] text-char"
+                >
+                  {detail.name}
+                </h3>
+                <span
+                  className={`shrink-0 pt-1 font-label text-xl font-bold ${
+                    detail.available ? "text-flame-ink" : "text-char-soft"
+                  }`}
+                >
+                  {detail.available ? detail.price : "Sold out"}
+                </span>
+              </div>
+              {detail.description && (
+                <p className="mt-3 leading-relaxed text-char-soft">{detail.description}</p>
+              )}
+              {detail.allergen && (
+                <p className="mt-5 font-label text-xs font-bold tracking-[0.06em] text-char-muted uppercase">
+                  {detail.allergen}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </dialog>
     </>
   );
 }
